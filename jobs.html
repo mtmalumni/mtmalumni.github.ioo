@@ -208,6 +208,7 @@
 
     <script>
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs8mI_zi4t8PU2pnAmxqG1sF0GVr6RWLC1HY8fNrDSjqFkak8a7gCJFdKvXDT1LrTERg/exec";
+        const escapeHTML = str => (str || "").toString().replace(/</g, "&lt;").replace(/>/g, "&gt;");
         
         let allJobsData = [];
         let loggedInUser = null;
@@ -317,18 +318,18 @@
                     <div class="job-card ${cardClass}">
                         <div class="job-header">
                             <div>
-                                <h3 class="job-title">${job.title}</h3>
-                                <div class="company-name">${job.company}</div>
+                                <h3 class="job-title">${escapeHTML(job.title)}</h3>
+                                <div class="company-name">${escapeHTML(job.company)}</div>
                             </div>
                             ${badgeHTML}
                         </div>
-                        <div class="job-location">📍 ${job.location}</div>
-                        <div class="job-desc">${job.desc}</div>
+                        <div class="job-location">📍 ${escapeHTML(job.location)}</div>
+                        <div class="job-desc">${escapeHTML(job.desc)}</div>
                         
                         <div class="job-footer">
                             <div class="job-contact">
                                 <span style="color:#64748b; font-size:11px; text-transform:uppercase;">Apply / Contact:</span><br>
-                                ${job.contact}
+                                ${escapeHTML(job.contact)}
                             </div>
                             <div class="job-meta">
                                 <span>Posted by: <b>${job.postedBy}</b></span>
