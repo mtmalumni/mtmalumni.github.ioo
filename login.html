@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MTM Alumni Portal</title>
+    <link rel="icon" type="image/webp" href="images/logo.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: var(--text); position: relative;}
+        
+        /* Back to Home Button */
+        .back-to-home { position: absolute; top: 25px; left: 30px; color: #64748b; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; transition: 0.3s; z-index: 10;}
+        .back-to-home:hover { color: var(--primary); transform: translateX(-3px);}
+        
+        .login-card { background-color: white; padding: 45px 35px; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); width: 100%; max-width: 420px; box-sizing: border-box; position: relative;}
+        .login-card h2 { text-align: center; color: var(--primary); margin-bottom: 10px; font-weight: 700; font-size: 26px; letter-spacing: 0.5px;}
+        .login-card p.subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 14px; margin-top: 0;}
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: 500; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 14px 15px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 15px; font-family: inherit; transition: 0.3s; background-color: #f8fafc;}
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); background-color: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);}
+        
+        /* Country Code Selector Styles */
+        .mobile-input-group { display: flex; gap: 10px; }
+        .country-select-container { position: relative; width: 40%; max-width: 150px; }
+        .selected-country { width: 100%; padding: 3px 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; background-color: #f8fafc; display: flex; align-items: center; transition: 0.3s;}
+        .selected-country:focus-within { border-color: var(--primary); background-color: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .selected-country input { border: none; padding: 9px 0; background: transparent; font-family: inherit; font-size: 14px; outline: none; width: 100%; font-weight: 500;}
+        .selected-country small { cursor: pointer; color: #64748b; padding-left: 5px; user-select: none;}
+        
+        .country-dropdown { position: absolute; top: 100%; left: 0; width: 280px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; margin-top: 8px; display: none; overflow: hidden;}
+        .country-dropdown.active { display: block; }
+        .country-dropdown input { width: 100%; padding: 14px; border: none; border-bottom: 1px solid #f1f5f9; box-sizing: border-box; outline: none; border-radius: 0; font-family: inherit; background-color: white;}
+        .country-dropdown ul { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+        .country-dropdown ul li { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f8fafc; font-size: 14px; }
+        .country-dropdown ul li:hover { background-color: #f1f5f9; color: var(--primary); font-weight: 500;}
+        .mobile-input-group > input { flex: 1; }
+        
+        .btn-primary { width: 100%; padding: 14px; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600; font-family: inherit; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);}
+        .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-2px);}
+        .btn-secondary { background-color: #10b981; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);}
+        .btn-secondary:hover { background-color: #059669; }
+        
+        .hidden { display: none !important; }
+        #message-box { margin-top: 20px; text-align: center; font-size: 14px; font-weight: 500; padding: 15px; border-radius: 8px; }
+        .success { background-color: #d1fae5; color: #065f46; border: 1px solid #34d399;}
+        .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171;}
+        
+        .extra-links { text-align: center; margin-top: 25px; font-size: 14px; color: #64748b; }
+        .extra-links a { color: var(--primary); text-decoration: none; font-weight: 600; transition: 0.3s;}
+        .extra-links a:hover { color: #1d4ed8; text-decoration: underline; }
+        .forgot-pass { display: block; text-align: right; margin-top: -10px; margin-bottom: 25px; font-size: 13px; }
+        .forgot-pass a { color: var(--primary); text-decoration: none; font-weight: 500;}
+        .forgot-pass a:hover { text-decoration: underline; }
+
+        .admin-link { text-align: center; margin-top: 20px; }
+        .admin-link a { color: #cbd5e1; font-size: 12px; text-decoration: none; transition: 0.3s; }
+        .admin-link a:hover { color: #64748b; text-decoration: underline; }
+
+        @media (max-width: 768px) { 
+            .back-to-home { top: 15px; left: 15px; font-size: 14px;} 
+            .login-card { margin-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-to-home">← Back to Home</a>
+
+    <div class="login-card">
+        <h2>MTM Alumni Portal</h2>
+        <p class="subtitle">Welcome back! Please login to continue.</p>
+        
+        <div id="step-1">
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <div class="mobile-input-group">
+                    <div class="country-select-container" id="custom-country-select">
+                        <div class="selected-country">
+                            <input type="text" id="login-country-code" value="+91" placeholder="+91">
+                            <small onclick="toggleCountryDropdown()">▼</small>
+                        </div>
+                        <div class="country-dropdown" id="country-dropdown">
+                            <input type="text" id="country-search" placeholder="Search country..." onkeyup="filterCountries()">
+                            <ul id="country-list"></ul>
+                        </div>
+                    </div>
+                    <input type="tel" id="mobile" placeholder="Enter number" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Select Batch</label>
+                <select id="batch" required>
+                    <option value="" disabled selected>Choose your batch...</option>
+                    <option value="1-4">1-4</option>
+                    <option value="5-Raihan">5-Raihan</option>
+                    <option value="6-Ashbal">6-Ashbal</option>
+                    <option value="7-Salwa">7-Salwa</option>
+                    <option value="8-Shafi & Maliki">8-Shafi & Maliki</option>
+                    <option value="9-Mishkath">9-Mishkath</option>
+                    <option value="10-Ihsan">10-Ihsan</option>
+                    <option value="11-Nahda">11-Nahda</option>
+                    <option value="12-Alif">12-Alif</option>
+                    <option value="13-Uswa">13-Uswa</option>
+                    <option value="14-Mahra">14-Mahra</option>
+                    <option value="15-Awaz">15-Awaz</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="requestLogin()">Continue</button>
+            
+            <div class="extra-links">
+                Not registered yet? <br><a href="register.html">Click here to register</a>
+            </div>
+            
+            <div class="admin-link">
+                <a href="admin.html">Admin Login</a>
+            </div>
+        </div>
+
+        <div id="step-2" class="hidden">
+            <div class="form-group">
+                <label>Enter 4-digit OTP sent to email</label>
+                <input type="number" id="otp-input" placeholder="e.g., 1234" required>
+            </div>
+            <div class="form-group">
+                <label>Create a new password</label>
+                <input type="password" id="new-password" placeholder="Enter new password" required>
+            </div>
+            <button class="btn-primary btn-secondary" onclick="verifyOTPAndLogin()">Save Password & Login</button>
+        </div>
+
+        <div id="step-3" class="hidden">
+            <div class="form-group">
+                <label>Enter your password</label>
+                <input type="password" id="login-password" placeholder="Enter password" required>
+            </div>
+            <div class="forgot-pass">
+                <a href="#" onclick="triggerForgotPassword()">Forgot Password?</a>
+            </div>
+            <button class="btn-primary btn-secondary" onclick="loginWithExistingPassword()">Login</button>
+        </div>
+
+        <div id="message-box" class="hidden"></div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs8mI_zi4t8PU2pnAmxqG1sF0GVr6RWLC1HY8fNrDSjqFkak8a7gCJFdKvXDT1LrTERg/exec";
+        
+        let globalMobileNumber = "";
+        let globalBatch = "";
+
+        // 🌐 പൂർണ്ണമായ രാജ്യങ്ങളുടെ ലിസ്റ്റ് 
+        const globalCountriesList = [
+            {name: "Afghanistan", dial_code: "+93", flag: "🇦🇫"}, {name: "Albania", dial_code: "+355", flag: "🇦🇱"}, {name: "Algeria", dial_code: "+213", flag: "🇩🇿"}, 
+            {name: "Andorra", dial_code: "+356", flag: "🇦🇩"}, {name: "Angola", dial_code: "+244", flag: "🇦🇴"}, {name: "Argentina", dial_code: "+54", flag: "🇦🇷"}, 
+            {name: "Armenia", dial_code: "+359", flag: "🇦🇲"}, {name: "Australia", dial_code: "+1", flag: "🇦🇺"}, {name: "Austria", dial_code: "+43", flag: "🇦🇹"}, 
+            {name: "Azerbaijan", dial_code: "+994", flag: "🇦🇿"}, {name: "Bahamas", dial_code: "+973", flag: "🇧🇸"}, {name: "Bahrain", dial_code: "+973", flag: "🇧🇭"}, 
+            {name: "Bangladesh", dial_code: "+880", flag: "🇧🇩"}, {name: "Belarus", dial_code: "+375", flag: "🇧🇾"}, {name: "Belgium", dial_code: "+32", flag: "🇧🇪"}, 
+            {name: "Belize", dial_code: "+1", flag: "🇧🇿"}, {name: "Benin", dial_code: "+229", flag: "🇧🇯"}, {name: "Bhutan", dial_code: "+975", flag: "🇧🇹"}, 
+            {name: "Bolivia", dial_code: "+591", flag: "🇧🇴"}, {name: "Bosnia and Herzegovina", dial_code: "+387", flag: "🇧🇦"}, {name: "Botswana", dial_code: "+267", flag: "🇧🇼"}, 
+            {name: "Brazil", dial_code: "+55", flag: "🇧🇷"}, {name: "Brunei", dial_code: "+673", flag: "🇧🇳"}, {name: "Bulgaria", dial_code: "+359", flag: "🇧🇬"}, 
+            {name: "Burkina Faso", dial_code: "+226", flag: "🇧🇫"}, {name: "Burundi", dial_code: "+257", flag: "🇧🇮"}, {name: "Cambodia", dial_code: "+855", flag: "🇰🇭"}, 
+            {name: "Cameroon", dial_code: "+237", flag: "🇨🇲"}, {name: "Canada", dial_code: "+1", flag: "🇨🇦"}, {name: "Chad", dial_code: "+237", flag: "🇹🇩"}, 
+            {name: "Chile", dial_code: "+56", flag: "🇨🇱"}, {name: "China", dial_code: "+86", flag: "🇨🇳"}, {name: "Colombia", dial_code: "+56", flag: "🇨🇴"}, 
+            {name: "Comoros", dial_code: "+269", flag: "🇰🇲"}, {name: "Congo", dial_code: "+242", flag: "🇨🇬"}, {name: "Costa Rica", dial_code: "+506", flag: "🇨🇷"}, 
+            {name: "Croatia", dial_code: "+385", flag: "🇭🇷"}, {name: "Cuba", dial_code: "+53", flag: "🇨🇺"}, {name: "Cyprus", dial_code: "+357", flag: "🇨🇾"}, 
+            {name: "Czech Republic", dial_code: "+420", flag: "🇨🇿"}, {name: "Denmark", dial_code: "+45", flag: "🇩🇰"}, {name: "Djibouti", dial_code: "+253", flag: "🇩🇯"}, 
+            {name: "Dominica", dial_code: "+1", flag: "🇩🇲"}, {name: "Dominican Republic", dial_code: "+1", flag: "🇩🇴"}, {name: "Ecuador", dial_code: "+593", flag: "🇪🇨"}, 
+            {name: "Egypt", dial_code: "+20", flag: "🇪🇬"}, {name: "El Salvador", dial_code: "+503", flag: "🇸🇻"}, {name: "Equatorial Guinea", dial_code: "+240", flag: "🇬🇶"}, 
+            {name: "Eritrea", dial_code: "+291", flag: "🇪🇷"}, {name: "Estonia", dial_code: "+372", flag: "🇪🇪"}, {name: "Ethiopia", dial_code: "+251", flag: "🇪🇹"}, 
+            {name: "Fiji", dial_code: "+679", flag: "🇫🇯"}, {name: "Finland", dial_code: "+358", flag: "🇫🇮"}, {name: "France", dial_code: "+33", flag: "🇫🇷"}, 
+            {name: "Gabon", dial_code: "+241", flag: "🇬🇦"}, {name: "Gambia", dial_code: "+220", flag: "🇬🇲"}, {name: "Georgia", dial_code: "+995", flag: "🇬🇪"}, 
+            {name: "Germany", dial_code: "+49", flag: "🇩🇪"}, {name: "Ghana", dial_code: "+233", flag: "🇬🇭"}, {name: "Greece", dial_code: "+30", flag: "🇬🇷"}, 
+            {name: "Guatemala", dial_code: "+502", flag: "🇬🇹"}, {name: "Guinea", dial_code: "+224", flag: "🇬🇳"}, {name: "Haiti", dial_code: "+967", flag: "🇭🇹"}, 
+            {name: "Honduras", dial_code: "+504", flag: "🇭🇳"}, {name: "Hungary", dial_code: "+36", flag: "🇭🇺"}, {name: "Iceland", dial_code: "+354", flag: "🇮🇸"}, 
+            {name: "India", dial_code: "+91", flag: "🇮🇳"}, {name: "Indonesia", dial_code: "+62", flag: "🇮🇩"}, {name: "Iran", dial_code: "+98", flag: "🇮🇷"}, 
+            {name: "Iraq", dial_code: "+98", flag: "🇮🇶"}, {name: "Ireland", dial_code: "+353", flag: "🇮🇪"}, {name: "Israel", dial_code: "+972", flag: "🇮🇱"}, 
+            {name: "Italy", dial_code: "+39", flag: "🇮🇹"}, {name: "Jamaica", dial_code: "+1", flag: "🇯🇲"}, {name: "Japan", dial_code: "+81", flag: "🇯🇵"}, 
+            {name: "Jordan", dial_code: "+962", flag: "🇯🇴"}, {name: "Kazakhstan", dial_code: "+7", flag: "🇰🇿"}, {name: "Kenya", dial_code: "+254", flag: "🇰🇪"}, 
+            {name: "Kiribati", dial_code: "+686", flag: "🇰🇮"}, {name: "Kuwait", dial_code: "+965", flag: "🇰🇼"}, {name: "Kyrgyzstan", dial_code: "+996", flag: "🇰🇬"}, 
+            {name: "Laos", dial_code: "+856", flag: "🇱🇦"}, {name: "Latvia", dial_code: "+371", flag: "🇱🇻"}, {name: "Lebanon", dial_code: "+961", flag: "🇱🇧"}, 
+            {name: "Lesotho", dial_code: "+266", flag: "🇱🇸"}, {name: "Liberia", dial_code: "+231", flag: "🇱🇷"}, {name: "Libya", dial_code: "+218", flag: "🇱🇾"}, 
+            {name: "Lithuania", dial_code: "+370", flag: "🇱🇹"}, {name: "Luxembourg", dial_code: "+352", flag: "🇱🇺"}, {name: "Madagascar", dial_code: "+261", flag: "🇲🇬"}, 
+            {name: "Malawi", dial_code: "+265", flag: "🇲🇼"}, {name: "Malaysia", dial_code: "+60", flag: "🇲🇾"}, {name: "Maldives", dial_code: "+960", flag: "🇲🇻"}, 
+            {name: "Mali", dial_code: "+223", flag: "🇲🇱"}, {name: "Malta", dial_code: "+356", flag: "🇲🇹"}, {name: "Mauritania", dial_code: "+230", flag: "🇲🇷"}, 
+            {name: "Mauritius", dial_code: "+230", flag: "🇲🇺"}, {name: "Mexico", dial_code: "+52", flag: "🇲🇽"}, {name: "Moldova", dial_code: "+373", flag: "🇲🇩"}, 
+            {name: "Monaco", dial_code: "+377", flag: "🇲🇨"}, {name: "Mongolia", dial_code: "+976", flag: "🇲🇳"}, {name: "Montenegro", dial_code: "+382", flag: "🇲🇪"}, 
+            {name: "Morocco", dial_code: "+212", flag: "🇲🇦"}, {name: "Mozambique", dial_code: "+258", flag: "🇲🇿"}, {name: "Myanmar", dial_code: "+95", flag: "🇲🇲"}, 
+            {name: "Namibia", dial_code: "+264", flag: "🇳🇦"}, {name: "Nepal", dial_code: "+977", flag: "🇳🇵"}, {name: "Netherlands", dial_code: "+31", flag: "🇳🇱"}, 
+            {name: "New Zealand", dial_code: "+64", flag: "🇳🇿"}, {name: "Nicaragua", dial_code: "+505", flag: "🇳🇮"}, {name: "Niger", dial_code: "+227", flag: "🇳🇪"}, 
+            {name: "Nigeria", dial_code: "+234", flag: "🇳🇬"}, {name: "North Korea", dial_code: "+850", flag: "🇰🇵"}, {name: "Norway", dial_code: "+47", flag: "🇳🇴"}, 
+            {name: "Oman", dial_code: "+968", flag: "🇴🇲"}, {name: "Pakistan", dial_code: "+92", flag: "🇵🇰"}, {name: "Palestine", dial_code: "+970", flag: "🇵🇸"}, 
+            {name: "Panama", dial_code: "+507", flag: "🇵🇦"}, {name: "Paraguay", dial_code: "+507", flag: "🇵🇾"}, {name: "Peru", dial_code: "+51", flag: "🇵🇪"}, 
+            {name: "Philippines", dial_code: "+63", flag: "🇵🇭"}, {name: "Poland", dial_code: "+48", flag: "🇵🇱"}, {name: "Portugal", dial_code: "+351", flag: "🇵🇹"}, 
+            {name: "Qatar", dial_code: "+974", flag: "🇶🇦"}, {name: "Romania", dial_code: "+40", flag: "🇷🇴"}, {name: "Russia", dial_code: "+7", flag: "🇷🇺"}, 
+            {name: "Rwanda", dial_code: "+250", flag: "🇷🇼"}, {name: "Samoa", dial_code: "+685", flag: "🇼🇸"}, {name: "San Marino", dial_code: "+378", flag: "🇸🇲"}, 
+            {name: "Saudi Arabia", dial_code: "+966", flag: "🇸🇦"}, {name: "Senegal", dial_code: "+221", flag: "🇸🇳"}, {name: "Serbia", dial_code: "+381", flag: "🇷🇸"}, 
+            {name: "Seychelles", dial_code: "+248", flag: "🇸🇨"}, {name: "Singapore", dial_code: "+65", flag: "🇸🇬"}, {name: "Slovakia", dial_code: "+421", flag: "🇸🇰"}, 
+            {name: "Slovenia", dial_code: "+421", flag: "🇸🇮"}, {name: "Somalia", dial_code: "+252", flag: "🇸🇴"}, {name: "South Africa", dial_code: "+27", flag: "🇿🇦"}, 
+            {name: "South Korea", dial_code: "+82", flag: "🇰🇷"}, {name: "Spain", dial_code: "+351", flag: "🇪🇸"}, {name: "Sri Lanka", dial_code: "+94", flag: "🇱🇰"}, 
+            {name: "Sudan", dial_code: "+249", flag: "🇸🇩"}, {name: "Suriname", dial_code: "+597", flag: "🇸🇷"}, {name: "Sweden", dial_code: "+46", flag: "🇸🇪"}, 
+            {name: "Switzerland", dial_code: "+41", flag: "🇨🇭"}, {name: "Syria", dial_code: "+963", flag: "🇸🇾"}, {name: "Taiwan", dial_code: "+886", flag: "🇹🇼"}, 
+            {name: "Tajikistan", dial_code: "+992", flag: "🇹🇯"}, {name: "Tanzania", dial_code: "+255", flag: "🇹🇿"}, {name: "Thailand", dial_code: "+66", flag: "🇹🇭"}, 
+            {name: "Togo", dial_code: "+228", flag: "🇹🇬"}, {name: "Tonga", dial_code: "+676", flag: "🇹🇴"}, {name: "Tunisia", dial_code: "+216", flag: "🇹🇳"}, 
+            {name: "Turkey", dial_code: "+30", flag: "🇹🇷"}, {name: "Turkmenistan", dial_code: "+993", flag: "🇹🇲"}, {name: "Uganda", dial_code: "+256", flag: "🇺🇬"}, 
+            {name: "Ukraine", dial_code: "+380", flag: "🇺🇦"}, {name: "United Arab Emirates", dial_code: "+971", flag: "🇦🇪"}, {name: "United Kingdom", dial_code: "+44", flag: "🇬🇧"}, 
+            {name: "United States", dial_code: "+1", flag: "🇺🇸"}, {name: "Uruguay", dial_code: "+598", flag: "🇺🇾"}, {name: "Uzbekistan", dial_code: "+998", flag: "🇺🇿"}, 
+            {name: "Vanuatu", dial_code: "+678", flag: "🇻🇺"}, {name: "Venezuela", dial_code: "+598", flag: "🇻🇪"}, {name: "Vietnam", dial_code: "+84", flag: "🇻🇳"}, 
+            {name: "Yemen", dial_code: "+967", flag: "🇾🇪"}, {name: "Zambia", dial_code: "+260", flag: "🇿🇲"}, {name: "Zimbabwe", dial_code: "+263", flag: "🇿🇼"}
+        ];
+
+        window.onload = function() {
+            if(localStorage.getItem("alumniUser") && localStorage.getItem("alumniMobile") && localStorage.getItem("alumniAuthToken")) {
+                window.location.replace("dashboard.html"); 
+            }
+            populateCountries(globalCountriesList);
+        };
+
+        function populateCountries(list) {
+            const ul = document.getElementById('country-list');
+            ul.innerHTML = '';
+            list.forEach(country => {
+                const li = document.createElement('li');
+                li.innerHTML = `${country.flag} ${country.name} (${country.dial_code})`;
+                li.onclick = function() { selectCountry(country.dial_code, country.flag); };
+                ul.appendChild(li);
+            });
+        }
+
+        function toggleCountryDropdown() {
+            const dropdown = document.getElementById('country-dropdown');
+            dropdown.classList.toggle('active');
+            if(dropdown.classList.contains('active')) document.getElementById('country-search').focus();
+        }
+
+        function selectCountry(dialCode, flag) {
+            document.getElementById('login-country-code').value = dialCode;
+            document.getElementById('country-dropdown').classList.remove('active');
+            document.getElementById('country-search').value = '';
+            populateCountries(globalCountriesList);
+        }
+
+        function filterCountries() {
+            const searchText = document.getElementById('country-search').value.toLowerCase();
+            const filtered = globalCountriesList.filter(c => c.name.toLowerCase().includes(searchText) || c.dial_code.includes(searchText));
+            populateCountries(filtered);
+        }
+
+        document.addEventListener('click', function(event) {
+            const container = document.getElementById('custom-country-select');
+            const dropdown = document.getElementById('country-dropdown');
+            if (container && dropdown && !container.contains(event.target)) dropdown.classList.remove('active');
+        });
+
+        function requestLogin() {
+            let dialCode = document.getElementById("login-country-code").value.trim();
+            if(!dialCode.startsWith("+")) dialCode = "+" + dialCode;
+
+            let rawMobile = document.getElementById('mobile').value;
+            const batchElement = document.getElementById('batch');
+            const batch = batchElement ? batchElement.value : "";
+            let cleanMobile = rawMobile.replace(/\s+/g, '');
+            const fullMobileNumber = dialCode + cleanMobile;
+
+            if(cleanMobile === "" || batch === "") { showMessage("Please enter mobile number and batch.", "error"); return; }
+
+            globalMobileNumber = fullMobileNumber;
+            globalBatch = batch;
+
+            showMessage("Verifying... Please wait.", "success");
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({ action: "requestOTP", mobile: fullMobileNumber, batch: batch }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "otp_sent") {
+                    showMessage(data.message, "success");
+                    document.getElementById('step-1').classList.add('hidden');
+                    document.getElementById('step-2').classList.remove('hidden');
+                } else if(data.status === "password_required") {
+                    showMessage(data.message, "success");
+                    document.getElementById('step-1').classList.add('hidden');
+                    document.getElementById('step-3').classList.remove('hidden');
+                } else showMessage(data.message, "error");
+            }).catch(e => showMessage("Network error. Try again.", "error"));
+        }
+
+        function verifyOTPAndLogin() {
+            const otp = document.getElementById('otp-input').value;
+            const newPass = document.getElementById('new-password').value;
+            if(otp === "" || newPass === "") { showMessage("Enter OTP and new password.", "error"); return; }
+            showMessage("Logging in...", "success");
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({ action: "verifyOTP", mobile: globalMobileNumber, batch: globalBatch, otp: otp, newPassword: newPass }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "success") {
+                    localStorage.setItem("alumniUser", JSON.stringify(data.userData));
+                    localStorage.setItem("alumniMobile", globalMobileNumber); 
+                    if(data.authToken) localStorage.setItem("alumniAuthToken", data.authToken);
+                    window.location.replace("dashboard.html");
+                } else {
+                    showMessage(data.message, "error");
+                }
+            }).catch(e => showMessage("Network error.", "error"));
+        }
+
+        function loginWithExistingPassword() {
+            const pass = document.getElementById('login-password').value;
+            if(pass === "") { showMessage("Enter your password.", "error"); return; }
+            showMessage("Logging in...", "success");
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({ action: "loginPassword", mobile: globalMobileNumber, batch: globalBatch, password: pass }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "success") {
+                    localStorage.setItem("alumniUser", JSON.stringify(data.userData));
+                    localStorage.setItem("alumniMobile", globalMobileNumber); 
+                    if(data.authToken) localStorage.setItem("alumniAuthToken", data.authToken);
+                    window.location.replace("dashboard.html");
+                } else showMessage(data.message, "error");
+            }).catch(e => showMessage("Network error.", "error"));
+        }
+
+        function triggerForgotPassword() {
+            showMessage("Sending OTP...", "success");
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({ action: "forgotPassword", mobile: globalMobileNumber, batch: globalBatch }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "otp_sent") {
+                    showMessage(data.message, "success");
+                    document.getElementById('step-3').classList.add('hidden');
+                    document.getElementById('step-2').classList.remove('hidden');
+                } else showMessage(data.message, "error");
+            }).catch(e => showMessage("Network error.", "error"));
+        }
+
+        function showMessage(msg, type) {
+            const box = document.getElementById('message-box');
+            box.classList.remove('hidden');
+            
+            if (msg.toLowerCase().includes("pending approval")) {
+                box.className = "";
+                box.style.backgroundColor = "#fffbeb";
+                box.style.color = "#b45309";
+                box.style.border = "1px solid #f59e0b";
+                box.style.padding = "15px";
+                box.innerHTML = `<b>⏳ Approval Pending</b><br><br>${msg}`;
+            } else {
+                box.className = type;
+                box.style.backgroundColor = ""; 
+                box.style.color = "";
+                box.style.border = "";
+                box.style.padding = "15px";
+                box.textContent = msg;
+            }
+        }
+    </script>
+</body>
+</html>

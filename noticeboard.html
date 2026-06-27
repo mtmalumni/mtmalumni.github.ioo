@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notice Board & Events - MTM Portal</title>
+    <link rel="icon" type="image/webp" href="images/logo.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --sidebar: #1e293b; --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 260px; background-color: var(--sidebar); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 1000; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #334155; position: relative;}
+        .sidebar-header h2 { margin: 0; font-size: 18px; color: #38bdf8; font-weight: 700; letter-spacing: 0.5px; line-height: 1.3;}
+        .nav-links { list-style: none; padding: 15px 0; margin: 0; flex: 1; overflow-y: auto;}
+        .nav-links li { padding: 12px 25px; margin: 5px 15px; border-radius: 8px; transition: 0.3s; position: relative;}
+        .nav-links li:hover, .nav-links li.active { background-color: var(--primary); }
+        .nav-links li a { color: white; text-decoration: none; display: flex; align-items: center; justify-content: space-between; font-weight: 500; font-size: 15px; width: 100%;}
+        .logout-btn { padding: 15px; margin: 20px; background-color: #ef4444; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .logout-btn:hover { background-color: #dc2626; }
+
+        /* Notification Badge (Red Dot) */
+        .nav-badge { display: none; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 5px rgba(239, 68, 68, 0.6); animation: pulse 2s infinite;}
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* Mobile Adjustments */
+        .menu-toggle { display: none; font-size: 24px; cursor: pointer; color: var(--text); }
+        .close-sidebar { display: none; position: absolute; top: 22px; right: 20px; font-size: 22px; cursor: pointer; color: white; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+        @media (max-width: 768px) { 
+            .sidebar { position: fixed; left: -260px; height: 100%; } 
+            .sidebar.show { left: 0; } 
+            .menu-toggle { display: block; } 
+            .sidebar-overlay.show { display: block; } 
+            .close-sidebar { display: block; }
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; scroll-behavior: smooth;}
+        .top-header { background-color: white; padding: 15px 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;}
+        .top-header h3 { margin: 0; font-weight: 600; display: flex; align-items: center; gap: 15px; color: var(--text);}
+        
+        .container { padding: 30px; max-width: 900px; margin: auto; width: 100%; box-sizing: border-box;}
+        
+        .header-section { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;}
+        .page-title { margin: 0; color: #1e293b; font-size: 24px; font-weight: 700;}
+        .page-desc { color: #64748b; margin-top: 5px; font-size: 15px;}
+        
+        /* Filter Controls */
+        .filter-controls { display: flex; gap: 10px; background: white; padding: 5px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow-x: auto;}
+        .filter-btn { background: none; border: none; padding: 8px 15px; font-size: 14px; font-weight: 600; color: #64748b; border-radius: 6px; cursor: pointer; transition: 0.3s; font-family: inherit; white-space: nowrap;}
+        .filter-btn.active { background: var(--primary); color: white; }
+
+        /* Notice Cards */
+        .notices-list { display: flex; flex-direction: column; gap: 20px; }
+        .notice-card { background-color: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-left: 5px solid var(--primary); position: relative; transition: 0.3s;}
+        .notice-card:hover { transform: translateX(3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);}
+        
+        /* Category Styles */
+        .notice-card.cat-event { border-left-color: #3b82f6; }
+        .notice-card.cat-notice { border-left-color: #f59e0b; }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;}
+        .title-wrapper h3 { margin: 0 0 5px 0; font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.4;}
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 5px;}
+        .badge-event { background: #dbeafe; color: #1e3a8a; }
+        .badge-notice { background: #fef3c7; color: #92400e; }
+        
+        .notice-date { font-size: 13px; color: #94a3b8; font-weight: 500; display: flex; align-items: center; gap: 5px;}
+        .notice-content { font-size: 15px; color: #475569; line-height: 1.6; white-space: pre-wrap; margin-bottom: 20px;}
+        
+        /* Event Specific Box */
+        .event-details-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;}
+        .detail-item { display: flex; flex-direction: column; gap: 3px; font-size: 14px;}
+        .detail-label { color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;}
+        .detail-value { color: #0f172a; font-weight: 500;}
+
+        /* RSVP Action (Toggles) */
+        .rsvp-section { border-top: 1px solid #f1f5f9; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+        .rsvp-status-text { font-size: 13px; font-weight: 600; color: #64748b; }
+        .rsvp-buttons { display: flex; gap: 10px; }
+        
+        .btn-rsvp { border: 1px solid #cbd5e1; background: white; color: #475569; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.3s;}
+        .btn-rsvp:hover { background: #f1f5f9; }
+        .btn-rsvp.active-yes { background: #10b981; color: white; border-color: #10b981; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);}
+        .btn-rsvp.active-no { background: #ef4444; color: white; border-color: #ef4444; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);}
+        .btn-rsvp:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        #loading-text { text-align: center; color: #64748b; font-size: 16px; margin: 40px 0; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 10px;}
+        .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 16px; color: #64748b;}
+        
+        /* Interactive message box */
+        #interactive-msg { position: fixed; bottom: 30px; right: 30px; background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-weight: 600; font-size: 14px; z-index: 2000; transform: translateY(100px); opacity: 0; transition: 0.4s;}
+        #interactive-msg.show { transform: translateY(0); opacity: 1; }
+        .msg-success { border-left: 5px solid #10b981; color: #065f46; }
+        .msg-error { border-left: 5px solid #ef4444; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" style="text-decoration: none;">
+                <h2>MTM Alumni<br>Association</h2>
+            </a>
+            <div class="close-sidebar" onclick="toggleMenu()">✖</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="directory.html">My Batch Directory</a></li>
+            <li><a href="mentorship.html">Mentorship Hub</a></li>
+            <li><a href="jobs.html">Career Hub <span class="nav-badge" id="badge-jobs"></span></a></li>
+            <li class="active"><a href="noticeboard.html">Notice Board <span class="nav-badge" id="badge-notices"></span></a></li>
+            <li><a href="profile.html">My Profile</a></li>
+        </ul>
+        <div class="logout-btn" onclick="logout()">Logout</div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-header">
+            <h3><span class="menu-toggle" onclick="toggleMenu()">☰</span> Notice Board</h3>
+        </div>
+
+        <div class="container">
+            <div class="header-section">
+                <div>
+                    <h2 class="page-title">Announcements & Events</h2>
+                    <p class="page-desc">Stay updated with official college news and alumni events.</p>
+                </div>
+                
+                <div class="filter-controls">
+                    <button class="filter-btn active" onclick="applyFilter('All', this)">All Updates</button>
+                    <button class="filter-btn" onclick="applyFilter('Event', this)">Events & Meetups</button>
+                    <button class="filter-btn" onclick="applyFilter('Notice', this)">General Notices</button>
+                </div>
+            </div>
+
+            <div id="loading-text">
+                <span>🔄 Fetching updates securely... Please wait.</span>
+            </div>
+            
+            <div class="notices-list" id="notices-container">
+                </div>
+        </div>
+    </div>
+
+    <div id="interactive-msg"></div>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs8mI_zi4t8PU2pnAmxqG1sF0GVr6RWLC1HY8fNrDSjqFkak8a7gCJFdKvXDT1LrTERg/exec";
+
+        let allNoticesData = [];
+        let loggedInUser = null;
+
+        function toggleMenu() { 
+            document.getElementById("sidebar").classList.toggle("show"); 
+            document.getElementById("sidebar-overlay").classList.toggle("show");
+        }
+
+        // 🛡️ Security Check
+        function checkSecurity() {
+            const userStr = localStorage.getItem("alumniUser");
+            const mobile = localStorage.getItem("alumniMobile");
+            const token = localStorage.getItem("alumniAuthToken");
+
+            if (!userStr || !mobile || !token) { 
+                window.location.replace("login.html"); 
+                return null; 
+            }
+            loggedInUser = JSON.parse(userStr);
+            return true;
+        }
+
+        window.onload = function() {
+            if(!checkSecurity()) return;
+            localStorage.setItem("lastSeenNotices", Date.now()); 
+            fetchNoticesData();
+        };
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                if(!localStorage.getItem("alumniAuthToken")) window.location.replace("login.html");
+            }
+        });
+
+        // ----------------------------------------------------
+        // CACHED FETCHING LOGIC 🛡️
+        // ----------------------------------------------------
+        function fetchNoticesData() {
+            const userMobile = localStorage.getItem("alumniMobile");
+            const cachedNotices = localStorage.getItem("noticeCache");
+            const cacheTime = localStorage.getItem("noticeCacheTime");
+
+            // 5 Minute Cache
+            if (cachedNotices && cacheTime && (Date.now() - cacheTime < 300000)) {
+                allNoticesData = JSON.parse(cachedNotices);
+                document.getElementById('loading-text').style.display = 'none';
+                renderNotices(allNoticesData);
+                return;
+            }
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({ action: "getNotices", mobile: userMobile }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "success") {
+                    allNoticesData = data.notices; 
+                    
+                    // കാഷിലേക്ക് സേവ് ചെയ്യുന്നു
+                    localStorage.setItem("noticeCache", JSON.stringify(allNoticesData));
+                    localStorage.setItem("noticeCacheTime", Date.now());
+
+                    document.getElementById('loading-text').style.display = 'none';
+                    renderNotices(allNoticesData);
+                } else {
+                    document.getElementById('loading-text').innerHTML = `<span style="color:red;">Error: ${data.message}</span>`;
+                }
+            })
+            .catch(error => { 
+                document.getElementById('loading-text').innerText = "Failed to load data. Please check network."; 
+            });
+        }
+
+        function applyFilter(category, btnElement) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            if(category === 'All') { 
+                renderNotices(allNoticesData); 
+            } else {
+                const filtered = allNoticesData.filter(n => (n.category || 'Notice') === category);
+                renderNotices(filtered);
+            }
+        }
+
+        function renderNotices(data) {
+            const container = document.getElementById('notices-container');
+            container.innerHTML = '';
+
+            if(!data || data.length === 0) {
+                container.innerHTML = `<div class="empty-state"><h3>No Updates Available</h3><p>There are no announcements or events in this category right now.</p></div>`;
+                return;
+            }
+
+            data.forEach(notice => {
+                let isEvent = (notice.category === "Event");
+                let badgeClass = isEvent ? "badge-event" : "badge-notice";
+                let badgeText = isEvent ? "📅 EVENT" : "📢 NOTICE";
+                let cardColorClass = isEvent ? "cat-event" : "cat-notice";
+
+                let eventDetailsHTML = "";
+                let rsvpHTML = "";
+
+                if(isEvent) {
+                    eventDetailsHTML = `
+                        <div class="event-details-box">
+                            <div class="detail-item"><span class="detail-label">Date</span><span class="detail-value">${notice.eventDate || "TBA"}</span></div>
+                            <div class="detail-item"><span class="detail-label">Time</span><span class="detail-value">${notice.eventTime || "TBA"}</span></div>
+                            <div class="detail-item"><span class="detail-label">Venue / Link</span><span class="detail-value">${notice.eventVenue || "TBA"}</span></div>
+                        </div>
+                    `;
+                    
+                    let escTitle = notice.title.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    let currentStatus = notice.userRsvpStatus; 
+                    let statusText = currentStatus ? `Your Status: <span style="color:${currentStatus==='Attending'?'#10b981':'#ef4444'}">${currentStatus}</span>` : "Will you attend this event?";
+                    
+                    let yesActive = currentStatus === "Attending" ? "active-yes" : "";
+                    let noActive = currentStatus === "Not Attending" ? "active-no" : "";
+
+                    rsvpHTML = `
+                        <div class="rsvp-section" id="rsvp-sec-${notice.rowIndex}">
+                            <div class="rsvp-status-text">${statusText}</div>
+                            <div class="rsvp-buttons">
+                                <button class="btn-rsvp ${yesActive}" id="btn-yes-${notice.rowIndex}" onclick="submitRSVP(${notice.rowIndex}, '${escTitle}', 'Attending')">✅ Attending</button>
+                                <button class="btn-rsvp ${noActive}" id="btn-no-${notice.rowIndex}" onclick="submitRSVP(${notice.rowIndex}, '${escTitle}', 'Not Attending')">❌ Not Attending</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const card = `
+                    <div class="notice-card ${cardColorClass}">
+                        <div class="card-header">
+                            <div class="title-wrapper">
+                                <span class="badge ${badgeClass}">${badgeText}</span>
+                                <h3>${notice.title}</h3>
+                            </div>
+                            <div class="notice-date">🕒 ${notice.date}</div>
+                        </div>
+                        <div class="notice-content">${notice.content}</div>
+                        ${eventDetailsHTML}
+                        ${rsvpHTML}
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        // ----------------------------------------------------
+        // RSVP SUBMISSION & CACHE UPDATE 🛡️
+        // ----------------------------------------------------
+        function submitRSVP(eventRowIndex, eventTitle, rsvpStatus) {
+            const btnYes = document.getElementById(`btn-yes-${eventRowIndex}`);
+            const btnNo = document.getElementById(`btn-no-${eventRowIndex}`);
+            
+            btnYes.disabled = true; btnNo.disabled = true;
+
+            const userMobile = localStorage.getItem("alumniMobile");
+            const userToken = localStorage.getItem("alumniAuthToken");
+
+            showToast("Updating your response...", "");
+
+            const payload = {
+                action: "addRSVP",
+                mobile: userMobile,
+                authToken: userToken, 
+                rsvpData: {
+                    eventRowIndex: eventRowIndex,
+                    eventTitle: eventTitle,
+                    userName: loggedInUser.name,
+                    userBatch: loggedInUser.batch,
+                    mobile: loggedInUser.mobile,
+                    email: loggedInUser.email,
+                    status: rsvpStatus
+                }
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnYes.disabled = false; btnNo.disabled = false;
+                
+                if(data.status === "success") {
+                    showToast(data.message, "success");
+                    
+                    // UI-യിലും കാഷിലും ഡാറ്റ അപ്ഡേറ്റ് ചെയ്യുന്നു
+                    let targetNotice = allNoticesData.find(n => n.rowIndex === eventRowIndex);
+                    if(targetNotice) {
+                        targetNotice.userRsvpStatus = rsvpStatus;
+                        localStorage.setItem("noticeCache", JSON.stringify(allNoticesData));
+                    }
+                    
+                    const activeFilterBtn = document.querySelector('.filter-btn.active');
+                    applyFilter(activeFilterBtn.innerText.includes('All') ? 'All' : (activeFilterBtn.innerText.includes('Event') ? 'Event' : 'Notice'), activeFilterBtn);
+                    
+                } else {
+                    showToast(data.message, "error");
+                    if(data.message.includes("Unauthorized") || data.message.includes("Security Error")) {
+                        setTimeout(logout, 3000);
+                    }
+                }
+            }).catch(e => { 
+                btnYes.disabled = false; btnNo.disabled = false;
+                showToast("Network Error. Try again.", "error"); 
+            });
+        }
+
+        function showToast(msg, type) {
+            const box = document.getElementById('interactive-msg');
+            box.textContent = msg; 
+            box.className = type === "success" ? "msg-success show" : (type === "error" ? "msg-error show" : "show");
+            setTimeout(() => { box.classList.remove('show'); }, 4000);
+        }
+
+        // Notification Badge System 🔴
+        function checkNotifications() {
+            if(window.location.pathname.includes("jobs.html")) localStorage.setItem("lastSeenJobs", Date.now());
+            
+            const cachedUpdates = localStorage.getItem("updatesCache");
+            const updatesTime = localStorage.getItem("updatesCacheTime");
+            
+            if (cachedUpdates && updatesTime && (Date.now() - updatesTime < 300000)) { 
+                processBadges(JSON.parse(cachedUpdates));
+            } else {
+                if(APPS_SCRIPT_URL) {
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST', body: JSON.stringify({ action: "getLatestUpdates" }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    }).then(res => res.json()).then(data => {
+                        if(data.status === "success") {
+                            localStorage.setItem("updatesCache", JSON.stringify(data));
+                            localStorage.setItem("updatesCacheTime", Date.now());
+                            processBadges(data);
+                        }
+                    }).catch(e => {});
+                }
+            }
+        }
+
+        function processBadges(data) {
+            const lastSeenJobs = localStorage.getItem("lastSeenJobs") || 0;
+            if(data.latestJob > lastSeenJobs && document.getElementById("badge-jobs")) {
+                document.getElementById("badge-jobs").style.display = "inline-block";
+            }
+        }
+        
+        setTimeout(checkNotifications, 1000);
+
+        function logout() { 
+            localStorage.removeItem("alumniUser"); 
+            localStorage.removeItem("alumniMobile"); 
+            localStorage.removeItem("alumniAuthToken"); 
+            localStorage.removeItem("noticeCache");
+            localStorage.removeItem("noticeCacheTime");
+            window.location.replace("login.html"); 
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>My Profile - MTM Portal</title>
+    <link rel="icon" type="image/webp" href="images/logo.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        :root { --primary: #2563eb; --sidebar: #1e293b; --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --success: #10b981; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: var(--sidebar); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 1000; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #334155; position: relative;}
+        .sidebar-header h2 { margin: 0; font-size: 18px; color: #38bdf8; font-weight: 700; line-height: 1.3;}
+        .nav-links { list-style: none; padding: 15px 0; margin: 0; flex: 1; overflow-y: auto;}
+        .nav-links li { padding: 12px 25px; margin: 5px 15px; border-radius: 8px; transition: 0.3s; position: relative;}
+        .nav-links li:hover, .nav-links li.active { background-color: var(--primary); }
+        .nav-links li a { color: white; text-decoration: none; display: flex; align-items: center; justify-content: space-between; font-weight: 500; font-size: 15px; width: 100%;}
+        .logout-btn { padding: 15px; margin: 20px; background-color: #ef4444; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .nav-badge { display: none; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 5px rgba(239, 68, 68, 0.6); animation: pulse 2s infinite;}
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); } }
+
+        /* Mobile */
+        .menu-toggle { display: none; font-size: 24px; cursor: pointer; color: var(--text); }
+        .close-sidebar { display: none; position: absolute; top: 22px; right: 20px; font-size: 22px; cursor: pointer; color: white; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+        @media (max-width: 768px) { 
+            .sidebar { position: fixed; left: -260px; height: 100%; } 
+            .sidebar.show { left: 0; } 
+            .menu-toggle { display: block; } 
+            .sidebar-overlay.show { display: block; } 
+            .close-sidebar { display: block; }
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; scroll-behavior: smooth;}
+        .top-header { background-color: white; padding: 15px 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;}
+        .top-header h3 { margin: 0; font-weight: 600; display: flex; align-items: center; gap: 15px;}
+        .container { padding: 30px; max-width: 900px; margin: auto; width: 100%; box-sizing: border-box;}
+        
+        .header-section { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;}
+        .page-title { margin: 0; color: #1e293b; font-size: 24px; font-weight: 700;}
+        .page-desc { color: #64748b; margin-top: 5px; font-size: 15px;}
+        .btn-edit-mode { background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(37,99,235,0.2); font-size: 14px; transition: 0.3s;}
+        .btn-edit-mode:hover { background: #1d4ed8; transform: translateY(-2px);}
+
+        /* Profile Photo Container */
+        .profile-photo-wrapper { text-align: center; padding: 30px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; display: flex; flex-direction: column; align-items: center;}
+        .photo-container { position: relative; width: 150px; height: 200px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 4px solid white; background: #e2e8f0; flex: none; margin-bottom: 15px;}
+        .photo-img { width: 100%; height: 100%; object-fit: cover; display: none;}
+        .photo-avatar { width: 100%; height: 100%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 65px; font-weight: 700; text-transform: uppercase;}
+        .photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; text-align: center; padding: 8px 0; font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.3s;}
+        .photo-overlay:hover { background: rgba(0,0,0,0.8); }
+        .profile-title-name { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0; }
+        .profile-title-role { font-size: 14px; color: #64748b; margin-top: 5px; font-weight: 500;}
+
+        /* Crop Modal */
+        .crop-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px);}
+        .crop-modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);}
+        .crop-container { width: 100%; max-height: 60vh; margin: 15px 0; background: #e2e8f0; }
+        .crop-container img { max-width: 100%; display: block; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 15px;}
+
+        /* View Mode Styles */
+        .view-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 25px; border: 1px solid #e2e8f0; overflow: hidden;}
+        .view-header { background: #f8fafc; padding: 15px 25px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: var(--primary); font-size: 16px;}
+        .view-body { padding: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;}
+        .view-item { margin-bottom: 5px;}
+        .view-label { display: block; font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .view-value { font-size: 15px; color: #0f172a; font-weight: 500; word-break: break-word;}
+        .view-value.empty { color: #94a3b8; font-style: italic;}
+
+        /* Edit Mode Styles */
+        #edit-profile-section { display: none; animation: fadeIn 0.4s;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-panel { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px; border: 1px solid #e2e8f0; border-top: 4px solid var(--primary);}
+        .section-title { font-size: 16px; font-weight: 600; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;}
+        
+        .form-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 250px; }
+        .form-group.full { width: 100%; flex: none; }
+        .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: 500; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; font-family: inherit; transition: 0.3s; background-color: #f8fafc;}
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); background-color: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);}
+        .form-group input[readonly] { background-color: #e2e8f0; cursor: not-allowed; color: #64748b;}
+
+        .action-buttons { display: flex; gap: 15px; margin-top: 10px;}
+        .btn-cancel { flex: 1; background-color: #f1f5f9; color: #475569; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s;}
+        .btn-cancel:hover { background-color: #e2e8f0; }
+        .btn-update { flex: 2; background-color: var(--success); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);}
+        .btn-update:hover { background-color: #059669; transform: translateY(-2px);}
+
+        #message-box { margin-bottom: 20px; text-align: center; font-size: 14px; font-weight: 500; padding: 15px; border-radius: 8px; display: none;}
+        .success { background-color: #d1fae5; color: #065f46; border: 1px solid #34d399;}
+        .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171;}
+    
+        #edit-profile-section input:not([type="email"]), 
+        #edit-profile-section textarea {
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" style="text-decoration: none;">
+                <h2>MTM Alumni<br>Association</h2>
+            </a>
+            <div class="close-sidebar" onclick="toggleMenu()">✖</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="directory.html">My Batch Directory</a></li>
+            <li><a href="mentorship.html">Mentorship Hub</a></li>
+            <li><a href="jobs.html">Career Hub <span class="nav-badge" id="badge-jobs"></span></a></li>
+            <li><a href="noticeboard.html">Notice Board <span class="nav-badge" id="badge-notices"></span></a></li>
+            <li class="active"><a href="profile.html">My Profile</a></li>
+        </ul>
+        <div class="logout-btn" onclick="logout()">Logout</div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-header">
+            <h3><span class="menu-toggle" onclick="toggleMenu()">☰</span> My Profile</h3>
+        </div>
+
+        <div class="container">
+            <div class="header-section">
+                <div>
+                    <h2 class="page-title">Profile Overview</h2>
+                    <p class="page-desc">Your current information on the portal. Click Edit to update your details.</p>
+                </div>
+                <button class="btn-edit-mode" id="toggle-edit-btn" onclick="toggleEditMode()">✏️ Edit Profile</button>
+            </div>
+
+            <div id="message-box"></div>
+
+            <div id="view-profile-section">
+                
+                <div class="profile-photo-wrapper">
+                    <div class="photo-container">
+                        <div class="photo-avatar" id="v-avatar-initial"></div>
+                        <img src="" alt="Profile Photo" class="photo-img" id="v-profile-pic">
+                        <div class="photo-overlay" id="photo-overlay-text" onclick="triggerPhotoUpload()">📷 Add Photo</div>
+                        <input type="file" id="photo-upload" accept="image/png, image/jpeg, image/webp" style="display:none;">
+                    </div>
+                    <div id="remove-photo-btn" style="display:none; color: #ef4444; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: -5px; margin-bottom: 15px;" onclick="removePhoto()">🗑️ Remove Photo</div>
+                    
+                    <h3 class="profile-title-name" id="v-title-name">Loading...</h3>
+                    <p class="profile-title-role" id="v-title-role">Loading...</p>
+                </div>
+
+                <div class="view-card">
+                    <div class="view-header">Personal Information</div>
+                    <div class="view-body">
+                        <div class="view-item"><span class="view-label">Full Name</span><div class="view-value" id="v-name"></div></div>
+                        <div class="view-item"><span class="view-label">Batch</span><div class="view-value" id="v-batch"></div></div>
+                        <div class="view-item"><span class="view-label">Mobile Number</span><div class="view-value" id="v-mobile"></div></div>
+                        <div class="view-item"><span class="view-label">WhatsApp Number</span><div class="view-value" id="v-wa"></div></div>
+                        <div class="view-item"><span class="view-label">Email ID</span><div class="view-value" id="v-email"></div></div>
+                        <div class="view-item"><span class="view-label">Alumnus Status</span><div class="view-value" id="v-alumStatus"></div></div>
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Current Status (Primary Activity)</span><div class="view-value" id="v-status" style="color: var(--primary); font-weight: 600;"></div></div>
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Permanent Address</span><div class="view-value" id="v-permAddr"></div></div>
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Current Address</span><div class="view-value" id="v-resAddr"></div></div>
+                        <div class="view-item" id="v-mentor-block" style="grid-column: 1 / -1; display:none;"><span class="view-label">Willing to Mentor Students?</span><div class="view-value" id="v-mentor" style="font-weight: 600;"></div></div>
+                    </div>
+                </div>
+
+                <div class="view-card" id="v-card-study" style="display:none; border-top: 3px solid #8b5cf6;">
+                    <div class="view-header">Academic Details</div>
+                    <div class="view-body">
+                        <div class="view-item"><span class="view-label">Course Name</span><div class="view-value" id="v-course"></div></div>
+                        <div class="view-item"><span class="view-label">Institute Name & Place</span><div class="view-value" id="v-inst"></div></div>
+                        <div class="view-item"><span class="view-label">Program Type</span><div class="view-value" id="v-progType"></div></div>
+                        <div class="view-item"><span class="view-label">Expected Completion</span><div class="view-value" id="v-expYear"></div></div>
+                        <div class="view-item"><span class="view-label">MTM Preparedness Rating</span><div class="view-value" id="v-prepRate"></div></div>
+                        <div class="view-item"><span class="view-label">Other Activities</span><div class="view-value" id="v-timeSpend"></div></div>
+                    </div>
+                </div>
+
+                <div class="view-card" id="v-card-biz" style="display:none; border-top: 3px solid #10b981;">
+                    <div class="view-header">Business & Entrepreneurship Details</div>
+                    <div class="view-body">
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Highest Educational Qualification</span><div class="view-value" id="v-biz-ed"></div></div>
+                        <div class="view-item"><span class="view-label">Business Name</span><div class="view-value" id="v-bizName"></div></div>
+                        <div class="view-item"><span class="view-label">Sector/Category</span><div class="view-value" id="v-bizCat"></div></div>
+                        <div class="view-item"><span class="view-label">Location</span><div class="view-value" id="v-bizLoc"></div></div>
+                        <div class="view-item"><span class="view-label">Number of Employees</span><div class="view-value" id="v-employees"></div></div>
+                    </div>
+                </div>
+
+                <div class="view-card" id="v-card-job" style="display:none; border-top: 3px solid #3b82f6;">
+                    <div class="view-header">Professional Employment Details</div>
+                    <div class="view-body">
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Highest Educational Qualification</span><div class="view-value" id="v-job-ed"></div></div>
+                        <div class="view-item"><span class="view-label">Job Title / Designation</span><div class="view-value" id="v-job"></div></div>
+                        <div class="view-item"><span class="view-label">Company Name</span><div class="view-value" id="v-company"></div></div>
+                        <div class="view-item"><span class="view-label">Place of Work</span><div class="view-value" id="v-jobPlace"></div></div>
+                        <div class="view-item"><span class="view-label">Industry Sector</span><div class="view-value" id="v-industry"></div></div>
+                        <div class="view-item"><span class="view-label">Years of Experience</span><div class="view-value" id="v-experience"></div></div>
+                    </div>
+                </div>
+
+                <div class="view-card" id="v-card-seek" style="display:none; border-top: 3px solid #f59e0b;">
+                    <div class="view-header">Job Seeking & Exam Prep Details</div>
+                    <div class="view-body">
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Highest Educational Qualification</span><div class="view-value" id="v-seek-ed"></div></div>
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Current Focus</span><div class="view-value" id="v-focus"></div></div>
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Preferred Industry Sectors</span><div class="view-value" id="v-prefSectors"></div></div>
+                        <div class="view-item" style="grid-column: 1 / -1;"><span class="view-label">Support needed from Alumni Assoc.</span><div class="view-value" id="v-support"></div></div>
+                    </div>
+                </div>
+
+                <div class="view-card">
+                    <div class="view-header">Feedback & Engagement</div>
+                    <div class="view-body" style="grid-template-columns: 1fr;">
+                        <div class="view-item"><span class="view-label">WhatsApp Group Status</span><div class="view-value" id="v-waGroups"></div></div>
+                        <div class="view-item"><span class="view-label">Satisfaction with Association</span><div class="view-value" id="v-satisfaction"></div></div>
+                        <div class="view-item"><span class="view-label">Willingness to Contribute</span><div class="view-value" id="v-contribute"></div></div>
+                        <div class="view-item"><span class="view-label">Valuable Skills Gained</span><div class="view-value" id="v-skills"></div></div>
+                        <div class="view-item"><span class="view-label">Suggestions for Improvement</span><div class="view-value" id="v-suggestions"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="edit-profile-section">
+                <div class="card-panel">
+                    <div class="section-title">Personal Information</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Full Name (Locked)</label><input type="text" id="edit-name" readonly></div>
+                        <div class="form-group"><label>Batch (Locked)</label><input type="text" id="edit-batch" readonly></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Mobile Number (Locked)</label><input type="text" id="edit-mobile" readonly></div>
+                        <div class="form-group"><label>WhatsApp Number</label><input type="tel" id="edit-wa" placeholder="If different from mobile"></div>
+                    </div>
+                    <div class="form-group full"><label>E-Mail ID *</label><input type="email" id="edit-email"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Permanent Address *</label><textarea id="edit-permAddr"></textarea></div>
+                        <div class="form-group"><label>Current Residential Address *</label><textarea id="edit-resAddr"></textarea></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Alumnus Status *</label>
+                            <select id="edit-alumStatus">
+                                <option value="Wafy Alumnus (Incomplete Course)">Wafy Alumnus (Incomplete Course)</option>
+                                <option value="Wafy Aliya Graduate">Wafy Aliya Graduate</option>
+                                <option value="Wafy PG Graduate">Wafy PG Graduate</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Status (Primary Activity) *</label>
+                            <select id="edit-status" onchange="handleStatusChange()">
+                                <option value="Further Study / Academic Pursuit">Further Study / Academic Pursuit</option>
+                                <option value="Entrepreneurship / Self-Employed">Entrepreneurship / Self-Employed</option>
+                                <option value="Professional Employment">Professional Employment</option>
+                                <option value="Seeking Job / Preparing for Competitive Exams">Seeking Job / Preparing for Competitive Exams</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full" id="mentor-form-group" style="display:none;">
+                        <label>Willing to mentor current MTM students in your sector?</label>
+                        <select id="edit-mentor">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card-panel" id="section-study" style="display:none; border-top-color: #8b5cf6;">
+                    <div class="section-title">Academic Details</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Course Name *</label><input type="text" id="edit-course"></div>
+                        <div class="form-group"><label>Name and Place of Institute *</label><input type="text" id="edit-inst"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Type of Study Program</label><select id="edit-progType"><option value="">Select...</option><option value="Full-Time">Full-Time</option><option value="Part-Time / Distance Education">Part-Time / Distance Education</option></select></div>
+                        <div class="form-group"><label>Expected Completion Year</label><input type="number" id="edit-expYear"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Rate MTM's preparedness (1-5)</label><select id="edit-prepRate"><option value="">Select...</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="form-group"><label>Other Activities</label><select id="edit-timeSpend"><option value="">Select...</option><option value="Full-time Employment">Full-time Employment</option><option value="Part-time Employment / Freelancing">Part-time Employment</option><option value="Self-Employed / Entrepreneurship">Self-Employed</option><option value="Competitive Exam Preparation">Exam Prep</option><option value="Internship / Apprenticeship">Internship</option><option value="Looking for Opportunities">Looking for Opportunities</option></select></div>
+                    </div>
+                </div>
+
+                <div class="card-panel" id="section-biz" style="display:none; border-top-color: #10b981;">
+                    <div class="section-title">Business & Entrepreneurship Details</div>
+                    <div class="form-group full"><label>Highest Educational Qualification & Institution *</label><input type="text" class="shared-ed"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Business Category/Sector</label><input type="text" id="edit-bizCat"></div>
+                        <div class="form-group"><label>Name of Business/Venture *</label><input type="text" id="edit-bizName"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Location of Business *</label><input type="text" id="edit-bizLoc"></div>
+                        <div class="form-group"><label>Number of Employees</label><select id="edit-employees"><option value="">Select...</option><option value="1 (Sole Proprietor)">1 (Sole Proprietor)</option><option value="2-5">2-5</option><option value="6-15">6-15</option><option value="16-50">16-50</option><option value="More than 50">More than 50</option></select></div>
+                    </div>
+                </div>
+
+                <div class="card-panel" id="section-job" style="display:none; border-top-color: #3b82f6;">
+                    <div class="section-title">Professional Employment Details</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Job Title/Designation *</label><input type="text" id="edit-job"></div>
+                        <div class="form-group"><label>Company/Institution Name *</label><input type="text" id="edit-company"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Place of Work (City, Country) *</label><input type="text" id="edit-jobPlace"></div>
+                        <div class="form-group"><label>Industry/Sector</label><input type="text" id="edit-industry"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Years of Experience *</label><input type="number" id="edit-experience"></div>
+                        <div class="form-group"><label>Highest Educational Qualification & Inst. *</label><input type="text" class="shared-ed"></div>
+                    </div>
+                </div>
+
+                <div class="card-panel" id="section-seek" style="display:none; border-top-color: #f59e0b;">
+                    <div class="section-title">Job Seeking & Exam Prep Details</div>
+                    <div class="form-group full"><label>Highest Educational Qualification & Institution *</label><input type="text" class="shared-ed"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Current Focus *</label><select id="edit-focus"><option value="">Select...</option><option value="Actively Seeking Full-Time Employment">Seeking Full-Time Employment</option><option value="Preparing for UPSC/State PSC">Preparing for UPSC/State PSC</option><option value="Preparing for NET/JRF/Ph.D.">Preparing for NET/JRF/Ph.D.</option><option value="Considering starting a business">Considering starting a business</option></select></div>
+                        <div class="form-group"><label>Preferred Industry Sectors</label><input type="text" id="edit-prefSectors"></div>
+                    </div>
+                    <div class="form-group full"><label>Support needed from Alumni Assoc.?</label><input type="text" id="edit-support"></div>
+                </div>
+
+                <div class="card-panel" style="border-top-color: #64748b;">
+                    <div class="section-title">Feedback & Engagement</div>
+                    <div class="form-group full"><label>Specific skills gained at MTM valuable now?</label><textarea id="edit-skills"></textarea></div>
+                    <div class="form-group full"><label>Suggestions to improve Alumni Association?</label><textarea id="edit-suggestions"></textarea></div>
+                    <div class="form-group full"><label>How are you willing to contribute to the college/students?</label><input type="text" id="edit-contribute"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Are you a part of the WhatsApp groups?</label><select id="edit-waGroups"><option value="">Select...</option><option value="Both Official and Batch-wise Groups">Both Official and Batch-wise Groups</option><option value="Official Public Alumni Group">Official Public Alumni Group</option><option value="Batch-wise Alumni Group">Batch-wise Alumni Group</option><option value="None of the above / Not joined yet">None of the above / Not joined yet</option></select></div>
+                        <div class="form-group"><label>Satisfaction with Association efforts (1-5)</label><select id="edit-satisfaction"><option value="">Select...</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-cancel" onclick="toggleEditMode()">Cancel Edit</button>
+                    <button class="btn-update" id="submit-btn" onclick="submitProfileUpdate()">Save Changes</button>
+                </div>
+                <br><br>
+            </div>
+        </div>
+    </div>
+
+    <div class="crop-modal" id="crop-modal">
+        <div class="crop-modal-content">
+            <h3 style="margin-top:0; color:var(--primary);">Adjust Profile Photo</h3>
+            <p style="font-size:13px; color:#64748b; margin-top:-10px;">Drag or zoom to fit the 3:4 portrait ratio.</p>
+            <div class="crop-container"><img id="crop-image" src="" alt="Crop Area"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeCropModal()">Cancel</button>
+                <button class="btn-update" id="save-photo-btn" onclick="cropAndUpload()">Crop & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // നിങ്ങളുടെ ഗൂഗിൾ ആപ്പ്സ് സ്ക്രിപ്റ്റ് URL ഇവിടെ നൽകുക
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs8mI_zi4t8PU2pnAmxqG1sF0GVr6RWLC1HY8fNrDSjqFkak8a7gCJFdKvXDT1LrTERg/exec";
+        
+        let isEditMode = false;
+        let cropper = null;
+
+        function toggleMenu() { 
+            document.getElementById("sidebar").classList.toggle("show"); 
+            document.getElementById("sidebar-overlay").classList.toggle("show");
+        }
+
+        // Security Token Check
+        function checkSecurity() {
+            const userStr = localStorage.getItem("alumniUser");
+            const mobile = localStorage.getItem("alumniMobile");
+            const token = localStorage.getItem("alumniAuthToken");
+
+            if (!userStr || !mobile || !token) { 
+                window.location.replace("login.html"); 
+                return null; 
+            }
+            return JSON.parse(userStr);
+        }
+
+        window.onload = function() {
+            const user = checkSecurity();
+            if (!user) return;
+            renderProfileView(user);
+        };
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                if(!localStorage.getItem("alumniAuthToken")) window.location.replace("login.html");
+            }
+        });
+
+        function setV(id, val) {
+            const el = document.getElementById(id);
+            if(val !== undefined && val !== null && String(val).trim() !== "") { 
+                el.innerText = String(val); 
+                el.classList.remove("empty"); 
+            } else { 
+                el.innerText = "Not Provided"; 
+                el.classList.add("empty"); 
+            }
+        }
+
+        function renderProfileView(user) {
+            const userName = user.name || "Alumni";
+            document.getElementById("v-title-name").innerText = userName;
+            
+            let displayRole = "Active Member";
+            const status = user.status || "";
+            if (status.includes("Working")) displayRole = (user.job || "Professional") + (user.company ? " at " + user.company : "");
+            else if (status.includes("Business")) displayRole = "Founder, " + (user.bizName || "Business");
+            else if (status.includes("Student")) displayRole = "Student, " + (user.course || "Higher Studies");
+            document.getElementById("v-title-role").innerText = displayRole + " | Batch: " + (user.batch || "");
+
+            if(user.profilePhoto) {
+                document.getElementById("v-avatar-initial").style.display = "none";
+                document.getElementById("v-profile-pic").src = user.profilePhoto;
+                document.getElementById("v-profile-pic").style.display = "block";
+                document.getElementById("remove-photo-btn").style.display = "block"; 
+                document.getElementById("photo-overlay-text").innerText = "📷 Change Photo";
+            } else {
+                document.getElementById("v-profile-pic").style.display = "none";
+                document.getElementById("v-avatar-initial").style.display = "flex";
+                document.getElementById("v-avatar-initial").innerText = userName.charAt(0).toUpperCase();
+                document.getElementById("remove-photo-btn").style.display = "none"; 
+                document.getElementById("photo-overlay-text").innerText = "📷 Add Photo";
+            }
+
+            setV("v-name", user.name); setV("v-batch", user.batch);
+            setV("v-mobile", user.mobile); setV("v-wa", user.wa);
+            setV("v-email", user.email); setV("v-alumStatus", user.alumStatus);
+            setV("v-status", user.status); setV("v-permAddr", user.permAddr);
+            setV("v-resAddr", user.resAddr);
+
+            document.getElementById("v-card-study").style.display = "none";
+            document.getElementById("v-card-biz").style.display = "none";
+            document.getElementById("v-card-job").style.display = "none";
+            document.getElementById("v-card-seek").style.display = "none";
+
+            if(status.includes("Professional")) {
+                document.getElementById("v-card-job").style.display = "block";
+                setV("v-job-ed", user.highestEd); setV("v-job", user.job); setV("v-company", user.company);
+                setV("v-jobPlace", user.jobPlace); setV("v-industry", user.industry); setV("v-experience", user.experience ? user.experience + " Years" : "");
+            } else if(status.includes("Entrepreneurship")) {
+                document.getElementById("v-card-biz").style.display = "block";
+                setV("v-biz-ed", user.highestEd); setV("v-bizCat", user.bizCat); setV("v-bizName", user.bizName);
+                setV("v-bizLoc", user.bizLoc); setV("v-employees", user.employees); setV("v-mentor", user.mentor);
+            } else if(status.includes("Further Study")) {
+                document.getElementById("v-card-study").style.display = "block";
+                setV("v-course", user.course); setV("v-inst", user.inst); setV("v-progType", user.progType);
+                setV("v-expYear", user.expYear); setV("v-prepRate", user.prepRate ? user.prepRate + "/5" : ""); setV("v-timeSpend", user.timeSpend);
+            } else if(status.includes("Seeking")) {
+                document.getElementById("v-card-seek").style.display = "block";
+                setV("v-seek-ed", user.highestEd); setV("v-focus", user.focus); setV("v-prefSectors", user.prefSectors); setV("v-support", user.support);
+            }
+
+            setV("v-waGroups", user.waGroups); setV("v-satisfaction", user.satisfaction ? user.satisfaction + "/5" : "");
+            setV("v-contribute", user.contribute); setV("v-skills", user.skills); setV("v-suggestions", user.suggestions);
+            
+            setV("v-mentor", user.mentor);
+            if(status.includes("Professional") || status.includes("Entrepreneurship")) {
+                document.getElementById("v-mentor-block").style.display = "block";
+            } else {
+                document.getElementById("v-mentor-block").style.display = "none";
+            }
+        }
+
+        // Photo Upload, Crop & Compress Logic
+        function triggerPhotoUpload() { document.getElementById('photo-upload').click(); }
+
+        document.getElementById('photo-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('crop-image').src = event.target.result;
+                    document.getElementById('crop-modal').style.display = 'flex';
+                    if(cropper) cropper.destroy();
+                    cropper = new Cropper(document.getElementById('crop-image'), {
+                        aspectRatio: 3 / 4,
+                        viewMode: 2,
+                        autoCropArea: 1
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function closeCropModal() {
+            document.getElementById('crop-modal').style.display = 'none';
+            if(cropper) cropper.destroy();
+            document.getElementById('photo-upload').value = "";
+        }
+
+        function cropAndUpload() {
+            if(!cropper) return;
+            const btn = document.getElementById('save-photo-btn');
+            btn.innerText = "Uploading... Please wait"; btn.disabled = true;
+
+            const canvas = cropper.getCroppedCanvas({ width: 600, height: 800 });
+            const base64Image = canvas.toDataURL('image/jpeg', 0.7);
+            const user = checkSecurity();
+            if(!user) return;
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow', 
+                body: JSON.stringify({
+                    action: "uploadProfilePhoto",
+                    mobile: user.mobile,
+                    batch: user.batch,
+                    name: user.name || "Alumni",
+                    photoData: base64Image.split(',')[1], 
+                    authToken: localStorage.getItem("alumniAuthToken")
+                }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.text())
+            .then(text => {
+                btn.innerText = "Crop & Save"; btn.disabled = false;
+                try {
+                    const cleanedText = text.trim();
+                    const data = JSON.parse(cleanedText); 
+                    
+                    if(data.status === "success") {
+                        user.profilePhoto = data.photoUrl;
+                        localStorage.setItem("alumniUser", JSON.stringify(user));
+                        localStorage.removeItem("batchCache"); 
+                        renderProfileView(user);
+                        closeCropModal();
+                        showMessage("Profile photo updated successfully!", "success");
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                } catch(err) {
+                    if (text.trim().startsWith("{")) {
+                        alert("Interface Error: " + err.message);
+                    } else {
+                        alert("Server Response Error: " + text); 
+                    }
+                }
+            }).catch(e => {
+                btn.innerText = "Crop & Save"; btn.disabled = false;
+                alert("Upload failed due to network error. Try again. Details: " + e.message);
+            });
+        }
+
+        function removePhoto() {
+            if(!confirm("Are you sure you want to remove your profile photo?")) return;
+            
+            const btn = document.getElementById('remove-photo-btn');
+            btn.innerText = "Removing...";
+            
+            const user = checkSecurity();
+            if(!user) return;
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({
+                    action: "removeProfilePhoto",
+                    mobile: user.mobile,
+                    batch: user.batch,
+                    authToken: localStorage.getItem("alumniAuthToken")
+                }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.text())
+            .then(text => {
+                btn.innerText = "🗑️ Remove Photo";
+                try {
+                    const data = JSON.parse(text.trim());
+                    if(data.status === "success") {
+                        user.profilePhoto = ""; 
+                        localStorage.setItem("alumniUser", JSON.stringify(user));
+                        localStorage.removeItem("batchCache"); 
+                        renderProfileView(user); 
+                        showMessage("Photo removed successfully!", "success");
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                } catch(e) {
+                    alert("Error processing response.");
+                }
+            }).catch(e => {
+                btn.innerText = "🗑️ Remove Photo";
+                alert("Network Error. Try again.");
+            });
+        }
+
+        // Standard Edit Profile Logic
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const viewSection = document.getElementById("view-profile-section");
+            const editSection = document.getElementById("edit-profile-section");
+            const toggleBtn = document.getElementById("toggle-edit-btn");
+
+            if(isEditMode) {
+                viewSection.style.display = "none";
+                editSection.style.display = "block";
+                toggleBtn.style.display = "none";
+                const user = checkSecurity();
+                populateForm(user);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                viewSection.style.display = "block";
+                editSection.style.display = "none";
+                toggleBtn.style.display = "block";
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // 💡 ഡ്രോപ്പ്-ഡൗൺ ഓപ്ഷനുകൾ കൃത്യമായി കണ്ടെത്താനുള്ള സ്ട്രോങ്ങ് കോഡ്
+        function setSelectValue(id, value) {
+            const el = document.getElementById(id);
+            if (!el || !value) return;
+            const valClean = String(value).trim().toLowerCase();
+            for (let i = 0; i < el.options.length; i++) {
+                if (el.options[i].value.trim().toLowerCase() === valClean) {
+                    el.selectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        function populateForm(user) {
+            const toUpper = (val) => (val || "").toString().toUpperCase(); 
+
+            // ടെക്സ്റ്റ് ബോക്സുകൾ മാത്രം ക്യാപിറ്റൽ ലെറ്ററിൽ ആക്കുന്നു
+            document.getElementById("edit-name").value = toUpper(user.name); 
+            document.getElementById("edit-batch").value = toUpper(user.batch);
+            document.getElementById("edit-mobile").value = toUpper(user.mobile); 
+            document.getElementById("edit-wa").value = toUpper(user.wa);
+            document.getElementById("edit-email").value = user.email || ""; 
+            document.getElementById("edit-permAddr").value = toUpper(user.permAddr);
+            document.getElementById("edit-resAddr").value = toUpper(user.resAddr); 
+            
+            // 💡 ഡ്രോപ്പ്-ഡൗണുകൾക്ക് മാത്രം പുതിയ setSelectValue ഫംഗ്ഷൻ ഉപയോഗിക്കുന്നു
+            setSelectValue("edit-alumStatus", user.alumStatus);
+            setSelectValue("edit-status", user.status);
+            setSelectValue("edit-progType", user.progType);
+            setSelectValue("edit-prepRate", user.prepRate);
+            setSelectValue("edit-timeSpend", user.timeSpend);
+            setSelectValue("edit-employees", user.employees);
+            setSelectValue("edit-mentor", user.mentor || "No");
+            setSelectValue("edit-focus", user.focus);
+            setSelectValue("edit-waGroups", user.waGroups);
+            setSelectValue("edit-satisfaction", user.satisfaction);
+
+            // ബാക്കിയുള്ള ടെക്സ്റ്റ് ബോക്സുകൾ
+            document.getElementById("edit-course").value = toUpper(user.course);
+            document.getElementById("edit-inst").value = toUpper(user.inst); 
+            document.getElementById("edit-expYear").value = toUpper(user.expYear); 
+            document.getElementById("edit-bizCat").value = toUpper(user.bizCat);
+            document.getElementById("edit-bizName").value = toUpper(user.bizName); 
+            document.getElementById("edit-bizLoc").value = toUpper(user.bizLoc);
+            document.getElementById("edit-job").value = toUpper(user.job); 
+            document.getElementById("edit-company").value = toUpper(user.company);
+            document.getElementById("edit-jobPlace").value = toUpper(user.jobPlace); 
+            document.getElementById("edit-industry").value = toUpper(user.industry);
+            document.getElementById("edit-experience").value = toUpper(user.experience); 
+            document.getElementById("edit-prefSectors").value = toUpper(user.prefSectors); 
+            document.getElementById("edit-support").value = toUpper(user.support);
+            document.getElementById("edit-skills").value = toUpper(user.skills); 
+            document.getElementById("edit-suggestions").value = toUpper(user.suggestions);
+            document.getElementById("edit-contribute").value = toUpper(user.contribute); 
+            
+            document.querySelectorAll(".shared-ed").forEach(f => { f.value = toUpper(user.highestEd); });
+            
+            handleStatusChange(); 
+        }
+
+        function handleStatusChange() {
+            const val = document.getElementById("edit-status").value;
+            document.getElementById("section-job").style.display = "none"; document.getElementById("section-biz").style.display = "none";
+            document.getElementById("section-study").style.display = "none"; document.getElementById("section-seek").style.display = "none";
+            
+            if(val.includes("Professional") || val.includes("Entrepreneurship")) {
+                document.getElementById("mentor-form-group").style.display = "block";
+            } else {
+                document.getElementById("mentor-form-group").style.display = "none";
+            }
+
+            if(val.includes("Professional")) document.getElementById("section-job").style.display = "block";
+            else if(val.includes("Entrepreneurship")) document.getElementById("section-biz").style.display = "block";
+            else if(val.includes("Further Study")) document.getElementById("section-study").style.display = "block";
+            else if(val.includes("Seeking")) document.getElementById("section-seek").style.display = "block";
+        }
+
+        function submitProfileUpdate() {
+            const btn = document.getElementById("submit-btn");
+            btn.innerText = "Updating..."; btn.disabled = true;
+
+            document.querySelectorAll('#edit-profile-section input:not([type="email"]), #edit-profile-section textarea').forEach(el => {
+                el.value = el.value.toUpperCase();
+            });
+
+            let highestEdVal = "";
+            document.querySelectorAll(".shared-ed").forEach(f => { if(f.offsetParent !== null && f.value) highestEdVal = f.value; });
+
+            const updatedData = {
+                wa: document.getElementById("edit-wa").value, email: document.getElementById("edit-email").value,
+                permAddr: document.getElementById("edit-permAddr").value, resAddr: document.getElementById("edit-resAddr").value,
+                alumStatus: document.getElementById("edit-alumStatus").value, status: document.getElementById("edit-status").value,
+                course: document.getElementById("edit-course").value, inst: document.getElementById("edit-inst").value,
+                progType: document.getElementById("edit-progType").value, expYear: document.getElementById("edit-expYear").value,
+                prepRate: document.getElementById("edit-prepRate").value, timeSpend: document.getElementById("edit-timeSpend").value,
+                bizCat: document.getElementById("edit-bizCat").value, bizName: document.getElementById("edit-bizName").value,
+                bizLoc: document.getElementById("edit-bizLoc").value, employees: document.getElementById("edit-employees").value,
+                mentor: document.getElementById("edit-mentor").value, job: document.getElementById("edit-job").value,
+                company: document.getElementById("edit-company").value, jobPlace: document.getElementById("edit-jobPlace").value,
+                industry: document.getElementById("edit-industry").value, experience: document.getElementById("edit-experience").value,
+                focus: document.getElementById("edit-focus").value, prefSectors: document.getElementById("edit-prefSectors").value,
+                support: document.getElementById("edit-support").value, skills: document.getElementById("edit-skills").value,
+                suggestions: document.getElementById("edit-suggestions").value, contribute: document.getElementById("edit-contribute").value,
+                waGroups: document.getElementById("edit-waGroups").value, satisfaction: document.getElementById("edit-satisfaction").value,
+                highestEd: highestEdVal
+            };
+
+            const user = checkSecurity();
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                body: JSON.stringify({ action: "updateFullProfile", mobile: user.mobile, batch: user.batch, profileData: updatedData, authToken: localStorage.getItem("alumniAuthToken") }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerText = "Save Changes"; btn.disabled = false;
+                if(data.status === "success") {
+                    localStorage.setItem("alumniUser", JSON.stringify(data.userData));
+                    localStorage.removeItem("batchCache"); 
+                    localStorage.removeItem("mentorCache"); 
+                    showMessage("Profile updated successfully!", "success");
+                    renderProfileView(data.userData);
+                    toggleEditMode();
+                } else {
+                    showMessage(data.message, "error");
+                    if(data.message.includes("Unauthorized") || data.message.includes("Security Error")) setTimeout(logout, 3000);
+                }
+            }).catch(e => { btn.innerText = "Save Changes"; btn.disabled = false; showMessage("Network Error. Try again.", "error"); });
+        }
+
+        function showMessage(msg, type) {
+            const box = document.getElementById('message-box');
+            box.textContent = msg; box.className = type; box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 4000);
+        }
+
+        function checkNotifications() {
+            if(window.location.pathname.includes("jobs.html")) localStorage.setItem("lastSeenJobs", Date.now());
+            if(window.location.pathname.includes("noticeboard.html")) localStorage.setItem("lastSeenNotices", Date.now());
+
+            const cachedUpdates = localStorage.getItem("updatesCache");
+            const updatesTime = localStorage.getItem("updatesCacheTime");
+            
+            if (cachedUpdates && updatesTime && (Date.now() - updatesTime < 300000)) { 
+                processBadges(JSON.parse(cachedUpdates));
+            } else {
+                if(APPS_SCRIPT_URL) {
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST', body: JSON.stringify({ action: "getLatestUpdates" }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    }).then(res => res.json()).then(data => {
+                        if(data.status === "success") {
+                            localStorage.setItem("updatesCache", JSON.stringify(data));
+                            localStorage.setItem("updatesCacheTime", Date.now());
+                            processBadges(data);
+                        }
+                    }).catch(e => {});
+                }
+            }
+        }
+
+        function processBadges(data) {
+            const lastSeenJobs = localStorage.getItem("lastSeenJobs") || 0;
+            const lastSeenNotices = localStorage.getItem("lastSeenNotices") || 0;
+            if(data.latestJob > lastSeenJobs && document.getElementById("badge-jobs")) document.getElementById("badge-jobs").style.display = "inline-block";
+            if(data.latestNotice > lastSeenNotices && document.getElementById("badge-notices")) document.getElementById("badge-notices").style.display = "inline-block";
+        }
+        
+        setTimeout(checkNotifications, 1000);
+
+        function logout() { 
+            localStorage.removeItem("alumniUser"); localStorage.removeItem("alumniMobile"); 
+            localStorage.removeItem("alumniAuthToken"); localStorage.removeItem("batchCache"); localStorage.removeItem("mentorCache");
+            window.location.replace("login.html"); 
+        }
+    </script>
+</body>
+</html>

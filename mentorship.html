@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentorship Hub - MTM Portal</title>
+    <link rel="icon" type="image/webp" href="images/logo.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --sidebar: #1e293b; --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 260px; background-color: var(--sidebar); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 1000; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #334155; position: relative;}
+        .sidebar-header h2 { margin: 0; font-size: 18px; color: #38bdf8; font-weight: 700; letter-spacing: 0.5px; line-height: 1.3;}
+        .nav-links { list-style: none; padding: 15px 0; margin: 0; flex: 1; overflow-y: auto;}
+        .nav-links li { padding: 12px 25px; margin: 5px 15px; border-radius: 8px; transition: 0.3s; position: relative;}
+        .nav-links li:hover, .nav-links li.active { background-color: var(--primary); }
+        .nav-links li a { color: white; text-decoration: none; display: flex; align-items: center; justify-content: space-between; font-weight: 500; font-size: 15px; width: 100%;}
+        .logout-btn { padding: 15px; margin: 20px; background-color: #ef4444; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .logout-btn:hover { background-color: #dc2626; }
+
+        /* Notification Badge (Red Dot) */
+        .nav-badge { display: none; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 5px rgba(239, 68, 68, 0.6); animation: pulse 2s infinite;}
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* Mobile Adjustments */
+        .menu-toggle { display: none; font-size: 24px; cursor: pointer; color: var(--text); }
+        .close-sidebar { display: none; position: absolute; top: 22px; right: 20px; font-size: 22px; cursor: pointer; color: white; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+        @media (max-width: 768px) { 
+            .sidebar { position: fixed; left: -260px; height: 100%; } 
+            .sidebar.show { left: 0; } 
+            .menu-toggle { display: block; } 
+            .sidebar-overlay.show { display: block; } 
+            .close-sidebar { display: block; }
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .top-header { background-color: white; padding: 15px 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;}
+        .top-header h3 { margin: 0; font-weight: 600; display: flex; align-items: center; gap: 15px; color: var(--text);}
+        
+        .container { padding: 30px; max-width: 1200px; margin: auto; width: 100%; box-sizing: border-box;}
+        
+        .header-section { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;}
+        .page-title { margin: 0; color: #1e293b; font-size: 24px; font-weight: 700;}
+        .page-desc { color: #64748b; margin-top: 5px; font-size: 15px; max-width: 600px;}
+        
+        /* Search Box */
+        .search-box { display: flex; align-items: center; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 15px; width: 100%; max-width: 350px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .search-box input { border: none; outline: none; padding: 10px; width: 100%; font-family: inherit; font-size: 14px; background: transparent;}
+        
+        /* Mentor Cards Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .card { background-color: var(--card-bg); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #e2e8f0; border-top: 4px solid var(--primary); position: relative;}
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1);}
+        
+        .card-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.3;}
+        .batch-text { font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 5px; margin-bottom: 15px; display: block; background: #eff6ff; padding: 4px 10px; border-radius: 20px; display: inline-block;}
+        
+        .card-body { margin-top: 15px; }
+        .info-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 14px; color: #475569;}
+        .info-icon { flex-shrink: 0; margin-top: 2px;}
+        
+        .card-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #cbd5e1;}
+        .btn-action { flex: 1; padding: 10px; border-radius: 8px; text-align: center; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s;}
+        .btn-whatsapp { background: #dcfce7; color: #166534; }
+        .btn-whatsapp:hover { background: #22c55e; color: white; }
+        .btn-email { background: #f1f5f9; color: #475569; }
+        .btn-email:hover { background: #e2e8f0; color: #0f172a; }
+
+        #loading-text { text-align: center; color: #64748b; font-size: 16px; margin: 40px 0; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 10px;}
+        .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 16px; color: #64748b; grid-column: 1/-1;}
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" style="text-decoration: none;">
+                <h2>MTM Alumni<br>Association</h2>
+            </a>
+            <div class="close-sidebar" onclick="toggleMenu()">✖</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="directory.html">My Batch Directory</a></li>
+            <li class="active"><a href="mentorship.html">Mentorship Hub</a></li>
+            <li><a href="jobs.html">Career Hub <span class="nav-badge" id="badge-jobs"></span></a></li>
+            <li><a href="noticeboard.html">Notice Board <span class="nav-badge" id="badge-notices"></span></a></li>
+            <li><a href="profile.html">My Profile</a></li>
+        </ul>
+        <div class="logout-btn" onclick="logout()">Logout</div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-header">
+            <h3><span class="menu-toggle" onclick="toggleMenu()">☰</span> Mentorship Hub</h3>
+        </div>
+
+        <div class="container">
+            <div class="header-section">
+                <div>
+                    <h2 class="page-title">Find a Mentor</h2>
+                    <p class="page-desc">Connect with experienced seniors who are ready to offer career guidance and support in their professional sectors.</p>
+                </div>
+                <div class="search-box">
+                    🔍 <input type="text" id="searchInput" placeholder="Search by sector, role or location..." onkeyup="filterMentors()">
+                </div>
+            </div>
+
+            <div id="loading-text">
+                <span>🔄 Fetching mentorship data... Please wait.</span>
+            </div>
+            
+            <div class="grid" id="mentors-grid">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // ഇവിടെ നിങ്ങളുടെ ഗൂഗിൾ ആപ്പ്സ് സ്ക്രിപ്റ്റ് URL നിർബന്ധമായും നൽകുക
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs8mI_zi4t8PU2pnAmxqG1sF0GVr6RWLC1HY8fNrDSjqFkak8a7gCJFdKvXDT1LrTERg/exec";
+
+        let allMentorsData = [];
+
+        function toggleMenu() { 
+            document.getElementById("sidebar").classList.toggle("show"); 
+            document.getElementById("sidebar-overlay").classList.toggle("show");
+        }
+
+        // 🛡️ Security Token Check
+        function checkSecurity() {
+            const userStr = localStorage.getItem("alumniUser");
+            const mobile = localStorage.getItem("alumniMobile");
+            const token = localStorage.getItem("alumniAuthToken");
+
+            if (!userStr || !mobile || !token) { 
+                window.location.replace("login.html"); 
+                return null; 
+            }
+            return JSON.parse(userStr);
+        }
+
+        window.onload = function() {
+            const user = checkSecurity();
+            if (!user) return;
+            fetchAlumniData(user.batch);
+        };
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                if(!localStorage.getItem("alumniAuthToken")) window.location.replace("login.html");
+            }
+        });
+
+        // 🛡️ Fetch Data Securely (with Token)
+        function fetchAlumniData(userBatch) {
+            const cachedMentors = localStorage.getItem("mentorCache");
+            const cacheTime = localStorage.getItem("mentorCacheTime");
+            
+            // Check Local Cache (Valid for 15 mins)
+            if (cachedMentors && cacheTime && (Date.now() - cacheTime < 900000)) {
+                allMentorsData = JSON.parse(cachedMentors);
+                document.getElementById('loading-text').style.display = 'none';
+                renderCards(allMentorsData);
+                return;
+            }
+
+            const userMobile = localStorage.getItem("alumniMobile");
+            const userToken = localStorage.getItem("alumniAuthToken");
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST', redirect: 'follow',
+                // ടോക്കൺ കൂടി ഒപ്പം അയക്കുന്നു 🛡️
+                body: JSON.stringify({ action: "getDirectoryData", userBatch: userBatch, mobile: userMobile, authToken: userToken }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "success") {
+                    allMentorsData = data.mentors; 
+                    
+                    localStorage.setItem("mentorCache", JSON.stringify(allMentorsData));
+                    localStorage.setItem("mentorCacheTime", Date.now());
+
+                    if(data.myBatch) {
+                        localStorage.setItem("batchCache", JSON.stringify(data.myBatch));
+                        localStorage.setItem("batchCacheTime", Date.now());
+                    }
+
+                    document.getElementById('loading-text').style.display = 'none';
+                    renderCards(allMentorsData);
+                } else {
+                    document.getElementById('loading-text').innerHTML = `<span style="color:red;">${data.message}</span>`;
+                    // ടോക്കൺ തെറ്റാണെങ്കിൽ ലോഗൗട്ട് ചെയ്യും
+                    if(data.message.includes("Unauthorized") || data.message.includes("Security Error")) {
+                        setTimeout(logout, 3000);
+                    }
+                }
+            })
+            .catch(error => { 
+                document.getElementById('loading-text').innerText = "Failed to load data. Please check network."; 
+            });
+        }
+
+        function renderCards(data) {
+            const grid = document.getElementById('mentors-grid');
+            grid.innerHTML = '';
+
+            if(!data || data.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><h3>No Mentors Available</h3><p>Currently, there are no alumni who have opted to be mentors.</p></div>`;
+                return;
+            }
+
+            data.forEach(person => {
+                let cleanWa = person.whatsapp ? String(person.whatsapp).replace(/\D/g, '') : '';
+                let waLink = cleanWa ? `href="https://wa.me/${cleanWa}?text=Hi%20${person.name},%20I%20am%20an%20alumnus%20from%20MTM%20Wafy%20College.%20I%20found%20your%20profile%20on%20the%20Mentorship%20Hub." target="_blank"` : `href="#" onclick="alert('WhatsApp number not provided'); return false;"`;
+                let mailLink = person.email ? `href="mailto:${person.email}?subject=Mentorship Request via MTM Alumni Portal"` : `href="#" onclick="alert('Email not provided'); return false;"`;
+
+                const card = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>${person.name}</h3>
+                            <span class="batch-text">Batch: ${person.batch}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-row">
+                                <span class="info-icon">🎯</span>
+                                <span>${person.roleDisplay}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-icon">📍</span>
+                                <span>${person.place}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <a ${waLink} class="btn-action btn-whatsapp">Request Mentorship</a>
+                            <a ${mailLink} class="btn-action btn-email">Email</a>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        function filterMentors() {
+            const searchTxt = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allMentorsData.filter(p => 
+                p.name.toLowerCase().includes(searchTxt) || 
+                p.roleDisplay.toLowerCase().includes(searchTxt) || 
+                p.place.toLowerCase().includes(searchTxt) ||
+                p.batch.toLowerCase().includes(searchTxt)
+            );
+            renderCards(filtered);
+        }
+
+        // Notification Badge System 🔴
+        function checkNotifications() {
+            if(window.location.pathname.includes("jobs.html")) localStorage.setItem("lastSeenJobs", Date.now());
+            if(window.location.pathname.includes("noticeboard.html")) localStorage.setItem("lastSeenNotices", Date.now());
+
+            const cachedUpdates = localStorage.getItem("updatesCache");
+            const updatesTime = localStorage.getItem("updatesCacheTime");
+            
+            if (cachedUpdates && updatesTime && (Date.now() - updatesTime < 300000)) { 
+                processBadges(JSON.parse(cachedUpdates));
+            } else {
+                if(APPS_SCRIPT_URL) {
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST', body: JSON.stringify({ action: "getLatestUpdates" }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    }).then(res => res.json()).then(data => {
+                        if(data.status === "success") {
+                            localStorage.setItem("updatesCache", JSON.stringify(data));
+                            localStorage.setItem("updatesCacheTime", Date.now());
+                            processBadges(data);
+                        }
+                    }).catch(e => {});
+                }
+            }
+        }
+
+        function processBadges(data) {
+            const lastSeenJobs = localStorage.getItem("lastSeenJobs") || 0;
+            const lastSeenNotices = localStorage.getItem("lastSeenNotices") || 0;
+            
+            if(data.latestJob > lastSeenJobs && document.getElementById("badge-jobs")) {
+                document.getElementById("badge-jobs").style.display = "inline-block";
+            }
+            if(data.latestNotice > lastSeenNotices && document.getElementById("badge-notices")) {
+                document.getElementById("badge-notices").style.display = "inline-block";
+            }
+        }
+        
+        setTimeout(checkNotifications, 1000);
+
+        function logout() { 
+            // ലോഗിൻ വിവരങ്ങളും ടോക്കണും ഡിലീറ്റ് ചെയ്യുന്നു 🛡️
+            localStorage.removeItem("alumniUser"); 
+            localStorage.removeItem("alumniMobile"); 
+            localStorage.removeItem("alumniAuthToken"); 
+            localStorage.removeItem("mentorCache");
+            localStorage.removeItem("mentorCacheTime");
+            window.location.replace("login.html"); 
+        }
+    </script>
+</body>
+</html>
